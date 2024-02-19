@@ -1,0 +1,18 @@
+{
+	"bot": {
+		"name": "Social View",
+		"custom_status": "by safatanc.com"
+	},
+	"allowed_channels": ["1079601646885154857", "1198052469796777995"],
+	"social_media": {
+		"tiktok" : {
+			"name": "TikTok",
+			"base_url": ["https://tiktok.com", "https://www.tiktok.com"],
+			"api_url": "https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id="
+		},
+		"instagram" : {
+			"name": "Instagram",
+			"base_url": ["https://instagram.com"]
+		}
+	}
+}
