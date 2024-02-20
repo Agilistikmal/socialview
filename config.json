@@ -12,7 +12,8 @@
 		},
 		"instagram" : {
 			"name": "Instagram",
-			"base_url": ["instagram.com"]
+			"base_url": ["instagram.com"],
+			"api_url": "https://instagram130.p.rapidapi.com/media-info-by-url?url="
 		}
 	}
 }

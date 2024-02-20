@@ -2,10 +2,12 @@ package events
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/agilistikmal/socialview/app/helper"
 	"github.com/agilistikmal/socialview/app/lib/service"
+	"github.com/agilistikmal/socialview/app/model"
 	"github.com/bwmarrin/discordgo"
 	"mvdan.cc/xurls/v2"
 )
@@ -44,11 +46,29 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						ChannelID: m.ChannelID,
 						GuildID:   m.GuildID,
 					})
-					video := service.GetTiktokVideo(msgUrl)
-					filename := "./tmp/" + video.ID + ".mp4"
-					service.SaveVideo(video.Source, filename)
-					file := service.GetVideo(filename)
-					defer file.Close()
+
+					var media model.Media
+					var filename string
+					var file *os.File
+
+					switch strings.ToLower(socialmedia.Name) {
+					case "tiktok":
+						media = service.GetTiktokVideo(msgUrl)
+						filename = "./tmp/" + media.ID + ".mp4"
+						service.SaveVideo(media.Source, filename)
+						file = service.GetVideo(filename)
+						defer file.Close()
+					case "instagram":
+						media = service.GetInstagramMedia(msgUrl)
+						if media.Type == "video" {
+							filename = "./tmp/" + media.ID + ".mp4"
+						} else {
+							filename = "./tmp/" + media.ID + ".png"
+						}
+						service.SaveVideo(media.Source, filename)
+						file = service.GetVideo(filename)
+						defer file.Close()
+					}
 
 					embed := &discordgo.MessageEmbed{
 						Description: fmt.Sprintf("From %s\n%s", m.Author.Mention(), m.Message.Content),
@@ -61,9 +81,8 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						Content: &content,
 						Files: []*discordgo.File{
 							{
-								Name:        filename,
-								ContentType: "video/mp4",
-								Reader:      file,
+								Name:   filename,
+								Reader: file,
 							},
 						},
 						Embed: embed,
