@@ -7,6 +7,7 @@ import (
 	"github.com/agilistikmal/socialview/app/helper"
 	"github.com/agilistikmal/socialview/app/lib/service"
 	"github.com/bwmarrin/discordgo"
+	"mvdan.cc/xurls/v2"
 )
 
 func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -31,19 +32,20 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	message := strings.ReplaceAll(m.Message.Content, "\n", "")
-	splitted := strings.Split(message, " ")
-	for _, word := range splitted {
+	xurl := xurls.Strict()
+	msgUrls := xurl.FindAllString(m.Message.Content, 1)
+
+	for _, msgUrl := range msgUrls {
 		for _, socialmedia := range config.SocialMedia {
 			for _, url := range socialmedia.BaseUrl {
-				if strings.Contains(word, url) {
+				if strings.Contains(msgUrl, url) {
 					msg, _ := s.ChannelMessageSendReply(m.ChannelID, "Sedang mengambil video, tunggu sebentar...", &discordgo.MessageReference{
 						MessageID: m.Message.ID,
 						ChannelID: m.ChannelID,
 						GuildID:   m.GuildID,
 					})
-					video := service.GetTiktokVideo(word)
-					filename := video.ID + ".mp4"
+					video := service.GetTiktokVideo(msgUrl)
+					filename := "./tmp/" + video.ID + ".mp4"
 					service.SaveVideo(video.Source, filename)
 					file := service.GetVideo(filename)
 					defer file.Close()
