@@ -7,12 +7,12 @@
 	"social_media": {
 		"tiktok" : {
 			"name": "TikTok",
-			"base_url": ["https://tiktok.com", "https://www.tiktok.com"],
+			"base_url": ["tiktok.com"],
 			"api_url": "https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id="
 		},
 		"instagram" : {
 			"name": "Instagram",
-			"base_url": ["https://instagram.com"]
+			"base_url": ["instagram.com"]
 		}
 	}
 }

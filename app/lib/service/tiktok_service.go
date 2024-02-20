@@ -5,15 +5,23 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/agilistikmal/socialview/app/helper"
 	"github.com/agilistikmal/socialview/app/model"
 )
 
-func GetTiktokVideoID(url string) string {
+func GetTiktokVideoID(link string) string {
+	r, err := http.Get(link)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	u, _ := url.Parse(r.Request.URL.String())
+	splitted := strings.Split(u.Path, "/")
+
 	var id string
-	splitted := strings.Split(url, "/")
 	for i, word := range splitted {
 		if word == "video" {
 			id = splitted[i+1]
@@ -22,10 +30,10 @@ func GetTiktokVideoID(url string) string {
 	return id
 }
 
-func GetTiktokVideo(url string) *model.TiktokAPIResponse {
+func GetTiktokVideo(link string) model.Media {
 	config := helper.LoadConfig()
 
-	id := GetTiktokVideoID(url)
+	id := GetTiktokVideoID(link)
 	apiUrl := config.SocialMedia["tiktok"].ApiUrl + id
 	res, err := http.Get(apiUrl)
 	if err != nil {
@@ -38,5 +46,11 @@ func GetTiktokVideo(url string) *model.TiktokAPIResponse {
 	var tiktokApiResponse model.TiktokAPIResponse
 	json.Unmarshal(b, &tiktokApiResponse)
 
-	return &tiktokApiResponse
+	media := model.Media{
+		ID:       tiktokApiResponse.AwemeList[0].AwemeID,
+		Type:     "video",
+		Platform: "tiktok",
+		Source:   tiktokApiResponse.AwemeList[0].Video.PlayAddr.UrlList[0],
+	}
+	return media
 }

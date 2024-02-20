@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/agilistikmal/socialview/app/helper"
@@ -30,7 +31,8 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	splitted := strings.Split(m.Message.Content, " ")
+	message := strings.ReplaceAll(m.Message.Content, "\n", "")
+	splitted := strings.Split(message, " ")
 	for _, word := range splitted {
 		for _, socialmedia := range config.SocialMedia {
 			for _, url := range socialmedia.BaseUrl {
@@ -40,27 +42,32 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						ChannelID: m.ChannelID,
 						GuildID:   m.GuildID,
 					})
-					tiktokVideo := service.GetTiktokVideo(word)
-					videoUrl := tiktokVideo.AwemeList[0].Video.PlayAddr.UrlList[0]
-
-					filename := "./tmp/video.mp4"
-					service.SaveVideo(videoUrl, filename)
+					video := service.GetTiktokVideo(word)
+					filename := video.ID + ".mp4"
+					service.SaveVideo(video.Source, filename)
 					file := service.GetVideo(filename)
 					defer file.Close()
 
-					content := tiktokVideo.AwemeList[0].AwemeID
+					embed := &discordgo.MessageEmbed{
+						Description: fmt.Sprintf("From %s\n%s", m.Author.Mention(), m.Message.Content),
+					}
+
+					content := m.Author.Mention()
 					s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 						ID:      msg.ID,
 						Channel: msg.ChannelID,
 						Content: &content,
 						Files: []*discordgo.File{
 							{
-								Name:        "tiktok.mp4",
+								Name:        filename,
 								ContentType: "video/mp4",
 								Reader:      file,
 							},
 						},
+						Embed: embed,
 					})
+
+					s.ChannelMessageDelete(m.ChannelID, m.Message.ID)
 					service.DeleteVideo(filename)
 				}
 			}
