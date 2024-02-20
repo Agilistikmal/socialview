@@ -60,6 +60,15 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						defer file.Close()
 					case "instagram":
 						media = service.GetInstagramMedia(msgUrl)
+						if media.Source == "ERROR" {
+							content := m.Author.Mention() + " API Timeout Error, coba lagi."
+							s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+								ID:      msg.ID,
+								Channel: msg.ChannelID,
+								Content: &content,
+							})
+							continue
+						}
 						if media.Type == "video" {
 							filename = "./tmp/" + media.ID + ".mp4"
 						} else {

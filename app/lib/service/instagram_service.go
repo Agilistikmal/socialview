@@ -36,7 +36,10 @@ func GetInstagramMedia(link string) model.Media {
 	}
 
 	if len(instagramResponse.DisplayResources) == 0 {
-		log.Fatal("Data not found")
+		log.Println("Data not found. Try again")
+		return model.Media{
+			Source: "ERROR",
+		}
 	}
 
 	var mediaType string
