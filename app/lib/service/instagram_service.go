@@ -12,7 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func GetInstagramMedia(link string) model.Media {
+func GetInstagramMedia(link string) []model.Media {
 	godotenv.Load()
 	config := helper.LoadConfig()
 
@@ -36,10 +36,7 @@ func GetInstagramMedia(link string) model.Media {
 	}
 
 	if len(instagramResponse.DisplayResources) == 0 {
-		log.Println("Data not found. Try again")
-		return model.Media{
-			Source: "ERROR",
-		}
+		return nil
 	}
 
 	var mediaType string
@@ -52,10 +49,13 @@ func GetInstagramMedia(link string) model.Media {
 		source = instagramResponse.DisplayResources[len(instagramResponse.DisplayResources)-1].Src
 	}
 
+	var mediaList []model.Media
 	media := model.Media{
 		Type:     mediaType,
 		Platform: "instagram",
 		Source:   source,
 	}
-	return media
+	mediaList = append(mediaList, media)
+
+	return mediaList
 }

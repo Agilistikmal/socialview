@@ -47,20 +47,39 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						GuildID:   m.GuildID,
 					})
 
-					var media model.Media
-					var filename string
-					var file *os.File
+					var mediaList []model.Media
+					var fileList []*os.File
 
 					switch strings.ToLower(socialmedia.Name) {
 					case "tiktok":
-						media = service.GetTiktokVideo(msgUrl)
-						filename = "./tmp/" + media.ID + ".mp4"
-						service.SaveVideo(media.Source, filename)
-						file = service.GetVideo(filename)
-						defer file.Close()
+						mediaList = service.GetTiktokMedia(msgUrl)
+						if mediaList == nil {
+							content := m.Author.Mention() + " Story tiktok belum bisa diambil."
+							s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+								ID:      msg.ID,
+								Channel: msg.ChannelID,
+								Content: &content,
+							})
+							continue
+						}
+
+						for _, media := range mediaList {
+							var extension string
+							switch media.Type {
+							case "video":
+								extension = ".mp4"
+							case "image":
+								extension = ".png"
+							}
+							filename := "./tmp/" + media.ID + extension
+							service.SaveVideo(media.Source, filename)
+							file := service.GetVideo(filename)
+							defer file.Close()
+							fileList = append(fileList, file)
+						}
 					case "instagram":
-						media = service.GetInstagramMedia(msgUrl)
-						if media.Source == "ERROR" {
+						mediaList = service.GetInstagramMedia(msgUrl)
+						if mediaList == nil {
 							content := m.Author.Mention() + " API Timeout Error, coba lagi."
 							s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 								ID:      msg.ID,
@@ -69,18 +88,32 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 							})
 							continue
 						}
-						if media.Type == "video" {
-							filename = "./tmp/" + media.ID + ".mp4"
-						} else {
-							filename = "./tmp/" + media.ID + ".png"
+
+						for _, media := range mediaList {
+							var filename string
+							if media.Type == "video" {
+								filename = "./tmp/" + media.ID + ".mp4"
+							} else {
+								filename = "./tmp/" + media.ID + ".png"
+							}
+							service.SaveVideo(media.Source, filename)
+							file := service.GetVideo(filename)
+							defer file.Close()
+							fileList = append(fileList, file)
 						}
-						service.SaveVideo(media.Source, filename)
-						file = service.GetVideo(filename)
-						defer file.Close()
 					}
 
 					embed := &discordgo.MessageEmbed{
 						Description: fmt.Sprintf("From %s\n%s", m.Author.Mention(), m.Message.Content),
+					}
+
+					var messageFiles []*discordgo.File
+					for _, file := range fileList {
+						messageFiles = append(messageFiles, &discordgo.File{
+							Name:   file.Name(),
+							Reader: file,
+						})
+						service.DeleteVideo(file.Name())
 					}
 
 					content := m.Author.Mention()
@@ -88,17 +121,11 @@ func FetchMessageUrl(s *discordgo.Session, m *discordgo.MessageCreate) {
 						ID:      msg.ID,
 						Channel: msg.ChannelID,
 						Content: &content,
-						Files: []*discordgo.File{
-							{
-								Name:   filename,
-								Reader: file,
-							},
-						},
-						Embed: embed,
+						Files:   messageFiles,
+						Embed:   embed,
 					})
 
 					s.ChannelMessageDelete(m.ChannelID, m.Message.ID)
-					service.DeleteVideo(filename)
 				}
 			}
 		}
