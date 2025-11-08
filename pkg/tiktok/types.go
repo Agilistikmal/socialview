@@ -1,6 +1,18 @@
 package tiktok
 
-import "github.com/agilistikmal/socialview/pkg"
+import (
+	"github.com/agilistikmal/socialview/pkg"
+)
+
+type TiktokPostType string
+
+const (
+	TiktokPostTypeVideo    TiktokPostType = "video"
+	TiktokPostTypePhoto    TiktokPostType = "photo"
+	TiktokPostTypeAudio    TiktokPostType = "audio"
+	TiktokPostTypeDocument TiktokPostType = "document"
+	TiktokPostTypeOther    TiktokPostType = "other"
+)
 
 type TiktokUniversalData struct {
 	DefaultScope TiktokDefaultScope `json:"__DEFAULT_SCOPE__,omitempty"`

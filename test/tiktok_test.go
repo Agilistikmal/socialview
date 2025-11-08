@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTiktokGetMedia(t *testing.T) {
+func TestTiktokGetVideo(t *testing.T) {
 	tiktokService := tiktok.NewTiktokService()
 	media, err := tiktokService.GetMedia("https://vt.tiktok.com/ZSyS5g8XL/")
 	assert.NoError(t, err)
@@ -16,9 +16,18 @@ func TestTiktokGetMedia(t *testing.T) {
 	t.Logf("Media ID: %s", media.ID)
 }
 
-func TestTiktokDownload(t *testing.T) {
+func TestTiktokDownloadVideo(t *testing.T) {
 	tiktokService := tiktok.NewTiktokService()
 	err := tiktokService.Download("https://vt.tiktok.com/ZSyS5g8XL/", "./testdata/video.mp4")
 	assert.NoError(t, err)
 	assert.FileExists(t, "./testdata/video.mp4")
+}
+
+func TestTiktokGetImage(t *testing.T) {
+	tiktokService := tiktok.NewTiktokService()
+	media, err := tiktokService.GetMedia("https://vt.tiktok.com/ZSy9tWrUv/")
+	assert.NoError(t, err)
+	assert.NotNil(t, media)
+
+	t.Logf("Media ID: %s", media.ID)
 }
