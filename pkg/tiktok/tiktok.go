@@ -1,12 +1,8 @@
 package tiktok
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"net/http/cookiejar"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,62 +38,22 @@ func NewTiktokService() pkg.SocialView {
 }
 
 func (s *TiktokService) GetMedia(u string) (*pkg.Media, error) {
-	parsedUrl, err := url.Parse(u)
-	if err != nil {
-		return nil, err
-	}
+	var media *pkg.Media
+	s.collector.OnHTML("script#__UNIVERSAL_DATA_FOR_REHYDRATION__", func(h *colly.HTMLElement) {
+		var universalData TiktokUniversalData
 
-	cookies, err := s.getCookies(u)
-	if err != nil {
-		return nil, err
-	}
-	jar, _ := cookiejar.New(nil)
-	for _, cookie := range cookies {
-		jar.SetCookies(parsedUrl, []*http.Cookie{cookie})
-	}
-	s.httpClient.Jar = jar
-
-	postId, _, err := s.getPostIdAndType(u)
-	if err != nil {
-		return nil, err
-	}
-
-	msToken := ""
-	for _, cookie := range cookies {
-		if cookie.Name == "msToken" {
-			msToken = cookie.Value
-			break
+		err := json.Unmarshal([]byte(h.Text), &universalData)
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
 
-	baseRequestModel := &TiktokBaseRequestModel{}
-	baseRequestModel = baseRequestModel.Default(msToken)
-	params := baseRequestModel.ToQueryParams() + "&itemId=" + postId
+		video := universalData.DefaultScope.VideoDetail.ItemInfo.ItemStruct.Video
+		media = video.ToMedia()
+	})
 
-	xbogusParams, _, _ := s.xbogusService.GetXBogus("/api/item/detail?" + params)
+	s.collector.Visit(u)
 
-	endpoint := fmt.Sprintf("%s%s", s.baseUrl, xbogusParams)
-
-	log.Printf("Endpoint: %s", endpoint)
-
-	req, _ := http.NewRequest("GET", endpoint, nil)
-	req.Header.Set("Referer", s.referer)
-	req.Header.Set("User-Agent", s.userAgent)
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Response Body: %s", string(responseBody))
-
-	return nil, nil
+	return media, nil
 }
 
 func (s *TiktokService) getCookies(u string) ([]*http.Cookie, error) {

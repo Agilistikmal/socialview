@@ -37,9 +37,10 @@ type TiktokBaseRequestModel struct {
 	WebcastLanguage string `json:"webcast_language,omitempty"`
 	TzName          string `json:"tz_name,omitempty"`
 	MsToken         string `json:"ms_token,omitempty"`
+	ItemId          string `json:"itemId,omitempty"`
 }
 
-func (m *TiktokBaseRequestModel) Default(msToken string) *TiktokBaseRequestModel {
+func (m *TiktokBaseRequestModel) Default(msToken string, itemId string) *TiktokBaseRequestModel {
 	return &TiktokBaseRequestModel{
 		WebIdLastTime:   strconv.FormatInt(time.Now().Unix(), 10),
 		Aid:             "1988",
@@ -70,6 +71,7 @@ func (m *TiktokBaseRequestModel) Default(msToken string) *TiktokBaseRequestModel
 		WebcastLanguage: "en",
 		TzName:          "America/Tijuana",
 		MsToken:         msToken,
+		ItemId:          itemId,
 	}
 }
 
@@ -104,6 +106,7 @@ func (m *TiktokBaseRequestModel) ToMap() map[string]interface{} {
 		"webcast_language": m.WebcastLanguage,
 		"tz_name":          m.TzName,
 		"ms_token":         m.MsToken,
+		"itemId":           m.ItemId,
 	}
 }
 
